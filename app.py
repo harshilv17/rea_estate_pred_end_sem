@@ -3,7 +3,9 @@ import os
 import pickle
 import pandas as pd
 from typing import Dict, List, TypedDict
+from dotenv import load_dotenv
 
+load_dotenv()
 from langchain_groq import ChatGroq
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import FakeEmbeddings
@@ -24,7 +26,14 @@ def load_model():
 
 @st.cache_resource
 def setup_llm():
-    api_key = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        try:
+            api_key = st.secrets.get("GROQ_API_KEY")
+        except FileNotFoundError:
+            pass
+        except Exception:
+            pass
     if not api_key:
         st.error("GROQ_API_KEY not found. Add it to .env or Streamlit secrets.")
         st.stop()
