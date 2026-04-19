@@ -12,7 +12,6 @@ load_dotenv()
 from langchain_groq import ChatGroq
 from langgraph.graph import StateGraph, START, END
 
-
 class SimpleVectorStore:
     """Lightweight in-memory vectorstore using TF-IDF + cosine similarity."""
 

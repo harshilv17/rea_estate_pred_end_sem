@@ -32,6 +32,7 @@ Conditional Routing (LangGraph)
 Advisory Report (Summary + Comps + Action + Disclaimer)
 ```
 
+
 | Price Category | Condition | Signal |
 |---|---|---|
 | Overpriced | >20% above location avg/sqft | CAUTION |

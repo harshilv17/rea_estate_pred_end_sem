@@ -382,3 +382,6 @@ print(result["advisory_report"])
 - Structured output format enforces consistency across all advisory reports
 - FakeEmbeddings used for free-tier compatibility (no embedding API cost)
 """
+   
+
+   
