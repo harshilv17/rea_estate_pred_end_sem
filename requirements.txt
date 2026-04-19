@@ -6,4 +6,7 @@ langchain
 langchain-groq
 langchain-community
 langgraph
-python-dotenv 
+python-dotenv
+black
+pylint
+flake8 
