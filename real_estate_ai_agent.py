@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-# 🏠 Intelligent Property Price Prediction & Agentic Real Estate Advisory
+# Intelligent Property Price Prediction & Agentic Real Estate Advisory
 
 GenAI Capstone — Milestone 2 | Agentic AI Real Estate Advisory System
 

@@ -1,4 +1,4 @@
-# 🏠 Intelligent Property Price Prediction & Agentic Real Estate Advisory
+# Intelligent Property Price Prediction & Agentic Real Estate Advisory
 
 **GenAI Capstone — Milestone 2**
 
@@ -34,9 +34,9 @@ Advisory Report (Summary + Comps + Action + Disclaimer)
 
 | Price Category | Condition | Signal |
 |---|---|---|
-| 🔴 Overpriced | >20% above location avg/sqft | CAUTION |
-| 🟡 Fair Value | within ±20% | HOLD / CONSIDER |
-| 🟢 Undervalued | <20% below location avg/sqft | BUY |
+| Overpriced | >20% above location avg/sqft | CAUTION |
+| Fair Value | within ±20% | HOLD / CONSIDER |
+| Undervalued | <20% below location avg/sqft | BUY |
 
 ---
 

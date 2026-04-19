@@ -11,7 +11,6 @@ from langgraph.graph import StateGraph, START, END
 
 st.set_page_config(
     page_title="Real Estate AI Advisory Agent",
-    page_icon="🏠",
     layout="wide"
 )
 
@@ -261,7 +260,7 @@ graph = builder.compile()
 
 # ── Streamlit UI ─────────────────────────────────────────────────────────────
 
-st.title("🏠 Real Estate AI Advisory Agent")
+st.title("Real Estate AI Advisory Agent")
 st.markdown("### Hybrid ML + LLM System for Bengaluru Property Investment")
 st.caption("Predict property price and get AI-powered investment advisory — powered by LangGraph + RAG.")
 
@@ -270,24 +269,24 @@ st.markdown("---")
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    area_type  = st.selectbox("🏗️ Area Type", sorted(data["area_type"].unique()))
-    total_sqft = st.number_input("📐 Total Square Feet", min_value=300, max_value=10000, value=1200)
-    bath       = st.number_input("🚿 Bathrooms", min_value=1, max_value=10, value=2)
+    area_type  = st.selectbox("Area Type", sorted(data["area_type"].unique()))
+    total_sqft = st.number_input("Total Square Feet", min_value=300, max_value=10000, value=1200)
+    bath       = st.number_input("Bathrooms", min_value=1, max_value=10, value=2)
 
 with col2:
-    location = st.selectbox("📍 Location", sorted(data["location"].dropna().unique()))
-    bhk      = st.number_input("🛏️ BHK", min_value=1, max_value=10, value=2)
-    balcony  = st.number_input("🌿 Balconies", min_value=0, max_value=5, value=1)
+    location = st.selectbox("Location", sorted(data["location"].dropna().unique()))
+    bhk      = st.number_input("BHK", min_value=1, max_value=10, value=2)
+    balcony  = st.number_input("Balconies", min_value=0, max_value=5, value=1)
 
 with col3:
-    st.markdown("### 📊 Dataset Stats")
+    st.markdown("### Dataset Stats")
     st.metric("Total Listings", f"{len(data):,}")
     st.metric("Unique Locations", f"{data['location'].nunique():,}")
     st.metric("Avg Price", f"₹{round(data['price'].mean(), 1)} L")
 
 st.markdown("---")
 
-if st.button("🔮 Get AI Advisory", type="primary", use_container_width=True):
+if st.button("Get AI Advisory", type="primary", use_container_width=True):
 
     property_data = {
         "area_type":  area_type,
@@ -298,7 +297,7 @@ if st.button("🔮 Get AI Advisory", type="primary", use_container_width=True):
         "bhk":        int(bhk)
     }
 
-    with st.spinner("🤖 Running AI Agent Pipeline... Please wait"):
+    with st.spinner("Running AI Agent Pipeline... Please wait"):
         initial_state = {
             "property_data":   property_data,
             "predicted_price": 0.0,
@@ -313,13 +312,13 @@ if st.button("🔮 Get AI Advisory", type="primary", use_container_width=True):
     category = result["price_category"]
 
     if category == "Overpriced":
-        badge, label = "🔴", "OVERPRICED"
+        label = "OVERPRICED"
     elif category == "Undervalued":
-        badge, label = "🟢", "UNDERVALUED — OPPORTUNITY"
+        label = "UNDERVALUED — OPPORTUNITY"
     else:
-        badge, label = "🟡", "FAIR VALUE"
+        label = "FAIR VALUE"
 
-    st.markdown(f"## {badge} {label}")
+    st.markdown(f"## {label}")
 
     m1, m2, m3 = st.columns(3)
     m1.metric("Predicted Price", f"₹{price:.2f} Lakhs")
@@ -327,20 +326,20 @@ if st.button("🔮 Get AI Advisory", type="primary", use_container_width=True):
     m3.metric("Location Avg / sqft", f"₹{location_avg_ppsf.get(location, global_avg_ppsf):,.0f}")
 
     if result["retrieved_docs"]:
-        st.success(f"📚 RAG Activated — {len(result['retrieved_docs'])} market guidelines retrieved")
+        st.success(f"RAG Activated — {len(result['retrieved_docs'])} market guidelines retrieved")
     else:
-        st.info("⚡ Fast Path — Direct advisory (retrieval skipped)")
+        st.info("Fast Path — Direct advisory (retrieval skipped)")
 
     st.markdown("---")
 
-    st.markdown("### 🔍 Market Analysis")
+    st.markdown("### Market Analysis")
     st.info(result["market_analysis"])
 
-    st.markdown("### 💡 Investment Advisory Report")
+    st.markdown("### Investment Advisory Report")
     st.success(result["advisory_report"])
 
     if result["retrieved_docs"]:
-        st.markdown("### 📚 Retrieved Market Intelligence")
+        st.markdown("### Retrieved Market Intelligence")
         for doc in result["retrieved_docs"]:
             st.markdown(f"- {doc}")
 
@@ -349,7 +348,6 @@ if st.button("🔮 Get AI Advisory", type="primary", use_container_width=True):
 else:
     st.markdown("""
     <div style="text-align:center; padding:3rem; color:#888;">
-        <p style="font-size:3rem;">👆</p>
         <p style="font-size:1.2rem;">Configure property details above and click <b>Get AI Advisory</b></p>
     </div>
     """, unsafe_allow_html=True)
@@ -357,7 +355,7 @@ else:
 
 # Sidebar
 with st.sidebar:
-    st.markdown("## 📊 System Info")
+    st.markdown("## System Info")
     st.markdown("""
     **ML Model:** Linear Regression (R² = 0.83)
     **LLM:** Groq LLaMA 3.3 70B
@@ -367,18 +365,28 @@ with st.sidebar:
 
     ---
 
-    ## 🔧 Agent Pipeline
-    - ✅ ML Price Prediction
-    - ✅ LLM Market Analysis
-    - ✅ Conditional RAG Routing
-    - ✅ Investment Advisory
+    ## Agent Pipeline
+    - [x] ML Price Prediction
+    - [x] LLM Market Analysis
+    - [x] Conditional RAG Routing
+    - [x] Investment Advisory
 
     ---
 
-    ## 📈 Price Categories
-    - **🔴 Overpriced:** >20% above avg/sqft
-    - **🟡 Fair Value:** within ±20%
-    - **🟢 Undervalued:** <20% below avg/sqft
+    ## Price Categories
+    - **Overpriced:** >20% above avg/sqft
+    - **Fair Value:** within ±20%
+    - **Undervalued:** <20% below avg/sqft
     """)
     st.markdown("---")
     st.markdown("Built for GenAI End-Sem Project — Milestone 2")
+
+
+
+
+
+
+
+
+
+
