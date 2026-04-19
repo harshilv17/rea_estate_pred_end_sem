@@ -6,5 +6,4 @@ langchain
 langchain-groq
 langchain-community
 langgraph
-chromadb
 python-dotenv

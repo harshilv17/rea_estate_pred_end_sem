@@ -2,14 +2,30 @@ import streamlit as st
 import os
 import pickle
 import pandas as pd
+import numpy as np
 from typing import Dict, List, TypedDict
 from dotenv import load_dotenv
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 load_dotenv()
 from langchain_groq import ChatGroq
-from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import FakeEmbeddings
 from langgraph.graph import StateGraph, START, END
+
+
+class SimpleVectorStore:
+    """Lightweight in-memory vectorstore using TF-IDF + cosine similarity."""
+
+    def __init__(self, documents: list[str]):
+        self.documents = documents
+        self.vectorizer = TfidfVectorizer()
+        self.tfidf_matrix = self.vectorizer.fit_transform(documents)
+
+    def similarity_search(self, query: str, k: int = 3) -> list[str]:
+        query_vec = self.vectorizer.transform([query])
+        scores = cosine_similarity(query_vec, self.tfidf_matrix).flatten()
+        top_k = np.argsort(scores)[::-1][:k]
+        return [self.documents[i] for i in top_k]
 
 st.set_page_config(
     page_title="Real Estate AI Advisory Agent",
@@ -81,7 +97,7 @@ def setup_rag():
         "Overpriced properties in saturated Bengaluru micro-markets take 6-12 months longer to resell.",
         "A property priced more than 20% above the location average per-sqft rate is a high negotiation risk."
     ]
-    return Chroma.from_texts(documents, FakeEmbeddings(size=384))
+    return SimpleVectorStore(documents)
 
 
 model       = load_model()
@@ -132,7 +148,7 @@ def get_comparable_properties(location: str, bhk: int) -> dict:
 
 
 def retrieve_docs(query: str, k: int = 3) -> list:
-    return [d.page_content for d in vectorstore.similarity_search(query, k=k)]
+    return vectorstore.similarity_search(query, k=k)
 
 
 ACTION_MAP = {
@@ -368,7 +384,7 @@ with st.sidebar:
     st.markdown("""
     **ML Model:** Linear Regression (R² = 0.83)
     **LLM:** Groq LLaMA 3.3 70B
-    **RAG:** Chroma Vectorstore
+    **RAG:** TF-IDF Vectorstore
     **Framework:** LangGraph
     **Dataset:** 13,000+ Bengaluru listings
 
