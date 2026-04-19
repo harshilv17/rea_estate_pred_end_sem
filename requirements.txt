@@ -8,3 +8,4 @@ langchain-community
 langgraph
 chromadb
 python-dotenv
+protobuf<=3.20.3
