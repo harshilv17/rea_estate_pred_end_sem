@@ -1,0 +1,169 @@
+\documentclass[12pt]{article}
+
+\usepackage[a4paper, margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{booktabs}
+
+\title{Intelligent Property Price Prediction \\ \large GenAI Capstone Project – Milestone 1}
+\author{Your Name}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+
+Real estate price prediction is an important task in property investment and urban planning. In this project, we develop a machine learning system to predict property prices using housing data from Bengaluru. The system performs data preprocessing, feature engineering, exploratory data analysis, and regression modeling to estimate housing prices. Two machine learning algorithms—Linear Regression and Random Forest—are implemented and evaluated using regression metrics including Mean Absolute Error (MAE), Root Mean Squared Error (RMSE), and the coefficient of determination ($R^2$). The trained model is integrated into a Streamlit-based web application for real-time property price prediction.
+
+\end{abstract}
+
+\section{Introduction}
+
+Accurate property valuation is critical for buyers, sellers, investors, and real estate platforms. Traditional valuation approaches rely on manual comparisons and expert knowledge, which can be subjective and time-consuming.
+
+Machine learning techniques allow automated analysis of historical housing data and enable predictive modeling of property prices based on key attributes such as location, area, number of bedrooms, and amenities.
+
+This project focuses on developing a machine learning system that predicts property prices using structured housing data from Bengaluru.
+
+\section{Dataset Description}
+
+The dataset contains housing listings from Bengaluru with various features describing property characteristics.
+
+Key features include:
+
+\begin{itemize}
+\item Area Type
+\item Location
+\item Total Square Footage
+\item Number of Bedrooms (BHK)
+\item Number of Bathrooms
+\item Number of Balconies
+\item Property Price (Target Variable)
+\end{itemize}
+
+The dataset required preprocessing due to missing values, inconsistent formatting of square footage values, and high-cardinality categorical features.
+
+\section{Data Preprocessing}
+
+Several preprocessing steps were applied to prepare the dataset for machine learning:
+
+\begin{itemize}
+\item Removal of columns with excessive missing values
+\item Extraction of bedroom count from the \textit{size} column
+\item Conversion of square footage ranges into numerical values
+\item Grouping of rare locations into a common category
+\item Removal of unrealistic outliers
+\end{itemize}
+
+Outlier detection was performed using price-per-square-foot analysis and logical constraints such as minimum area per bedroom.
+
+\section{Machine Learning Models}
+
+Two regression algorithms were used to predict property prices.
+
+\subsection{Linear Regression}
+
+Linear Regression models the relationship between independent variables and the target variable using a linear equation:
+
+\[
+y = \beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_nx_n + \epsilon
+\]
+
+where:
+
+\begin{itemize}
+\item $y$ = predicted price
+\item $x_1, x_2, ..., x_n$ = input features
+\item $\beta_0$ = intercept
+\item $\beta_i$ = regression coefficients
+\item $\epsilon$ = error term
+\end{itemize}
+
+The model estimates coefficients that minimize the squared prediction error.
+
+\subsection{Random Forest Regressor}
+
+Random Forest is an ensemble learning method that constructs multiple decision trees during training and outputs the average prediction of the trees.
+
+The final prediction is computed as:
+
+\[
+\hat{y} = \frac{1}{T}\sum_{t=1}^{T} f_t(x)
+\]
+
+where:
+
+\begin{itemize}
+\item $T$ = number of decision trees
+\item $f_t(x)$ = prediction from the $t^{th}$ tree
+\end{itemize}
+
+Random Forest models are capable of capturing nonlinear relationships between features and property prices.
+
+\section{Model Evaluation}
+
+The models were evaluated using three regression metrics.
+
+\subsection{Mean Absolute Error (MAE)}
+
+MAE measures the average absolute difference between predicted and actual values.
+
+\[
+MAE = \frac{1}{n}\sum_{i=1}^{n} |y_i - \hat{y}_i|
+\]
+
+\subsection{Root Mean Squared Error (RMSE)}
+
+RMSE penalizes larger prediction errors more strongly.
+
+\[
+RMSE = \sqrt{\frac{1}{n}\sum_{i=1}^{n}(y_i - \hat{y}_i)^2}
+\]
+
+\subsection{Coefficient of Determination ($R^2$)}
+
+The $R^2$ score measures how well the model explains the variance in the data.
+
+\[
+R^2 = 1 - \frac{\sum (y_i - \hat{y}_i)^2}{\sum (y_i - \bar{y})^2}
+\]
+
+where $\bar{y}$ is the mean of actual values.
+
+\section{Results}
+
+The performance of the models on the test dataset is shown in Table 1.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+Model & MAE & RMSE & $R^2$ \\
+\midrule
+Linear Regression & 15.96 & 30.00 & 0.83 \\
+Random Forest & 14.51 & 30.77 & 0.82 \\
+\bottomrule
+\end{tabular}
+\caption{Model Performance Comparison}
+\end{table}
+
+The Linear Regression model achieved an $R^2$ score of 0.83, indicating that it explains approximately 83\% of the variance in property prices.
+
+\section{Web Application Interface}
+
+To make the model accessible to users, a Streamlit-based web application was developed. The interface allows users to enter property attributes such as location, square footage, number of bedrooms, and other amenities.
+
+The trained model processes these inputs and returns a predicted property price in real time.
+
+\section{Conclusion}
+
+This project demonstrates the application of machine learning techniques for real estate price prediction. Through data preprocessing, exploratory analysis, and regression modeling, the system successfully predicts housing prices based on property features.
+
+The results indicate that features such as location, property size, and number of bedrooms are strong predictors of property prices. The developed system provides a practical tool for estimating housing values and understanding real estate market patterns.
+
+Future work will extend this system into an agentic AI-based real estate advisory assistant capable of providing investment recommendations and automated market insights.
+
+\end{document}
