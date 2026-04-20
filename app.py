@@ -12,6 +12,7 @@ load_dotenv()
 from langchain_groq import ChatGroq
 from langgraph.graph import StateGraph, START, END
 
+
 class SimpleVectorStore:
     """Lightweight in-memory vectorstore using TF-IDF + cosine similarity."""
 
@@ -26,12 +27,11 @@ class SimpleVectorStore:
         top_k = np.argsort(scores)[::-1][:k]
         return [self.documents[i] for i in top_k]
 
-st.set_page_config(
-    page_title="Real Estate AI Advisory Agent",
-    layout="wide"
-)
+
+st.set_page_config(page_title="Real Estate AI Advisory Agent", layout="wide")
 
 # ── Cached Resource Setup ────────────────────────────────────────────────────
+
 
 @st.cache_resource
 def load_model():
@@ -58,27 +58,27 @@ def setup_llm():
 @st.cache_resource
 def load_data():
     data = pd.read_csv("Bengaluru_House_Data.csv")
-    data = data.drop(['society', 'availability'], axis=1, errors='ignore')
+    data = data.drop(["society", "availability"], axis=1, errors="ignore")
     data = data.dropna()
 
     def convert_sqft(x):
         try:
-            if '-' in str(x):
-                a, b = x.split('-')
+            if "-" in str(x):
+                a, b = x.split("-")
                 return (float(a) + float(b)) / 2
             return float(x)
         except:
             return None
 
-    data['total_sqft'] = data['total_sqft'].apply(convert_sqft)
+    data["total_sqft"] = data["total_sqft"].apply(convert_sqft)
     data = data.dropna()
 
-    extracted = data['size'].str.split().str[0]
-    data['bhk'] = pd.to_numeric(extracted, errors='coerce')
-    data.dropna(subset=['bhk'], inplace=True)
-    data['bhk'] = data['bhk'].astype(int)
-    data = data.drop('size', axis=1)
-    data['price_per_sqft'] = (data['price'] * 100000) / data['total_sqft']
+    extracted = data["size"].str.split().str[0]
+    data["bhk"] = pd.to_numeric(extracted, errors="coerce")
+    data.dropna(subset=["bhk"], inplace=True)
+    data["bhk"] = data["bhk"].astype(int)
+    data = data.drop("size", axis=1)
+    data["price_per_sqft"] = (data["price"] * 100000) / data["total_sqft"]
     return data
 
 
@@ -94,28 +94,29 @@ def setup_rag():
         "Ready-to-move properties command 5-15% premium over under-construction due to immediate occupancy and no GST.",
         "Properties below ₹50L in peripheral Bengaluru show higher rental yield (3-4%) vs premium properties (1.5-2.5%).",
         "Overpriced properties in saturated Bengaluru micro-markets take 6-12 months longer to resell.",
-        "A property priced more than 20% above the location average per-sqft rate is a high negotiation risk."
+        "A property priced more than 20% above the location average per-sqft rate is a high negotiation risk.",
     ]
     return SimpleVectorStore(documents)
 
 
-model       = load_model()
-llm         = setup_llm()
-data        = load_data()
+model = load_model()
+llm = setup_llm()
+data = load_data()
 vectorstore = setup_rag()
 
-location_avg_ppsf = data.groupby('location')['price_per_sqft'].mean().to_dict()
-global_avg_ppsf   = float(data['price_per_sqft'].mean())
+location_avg_ppsf = data.groupby("location")["price_per_sqft"].mean().to_dict()
+global_avg_ppsf = float(data["price_per_sqft"].mean())
 
 
 # ── Agent State & Logic ──────────────────────────────────────────────────────
 
+
 class AgentState(TypedDict):
-    property_data:   Dict
+    property_data: Dict
     predicted_price: float
-    price_category:  str
+    price_category: str
     market_analysis: str
-    retrieved_docs:  List[str]
+    retrieved_docs: List[str]
     advisory_report: str
 
 
@@ -124,9 +125,9 @@ def predict_price(prop: dict) -> float:
 
 
 def get_price_category(location: str, total_sqft: float, predicted_price: float) -> str:
-    ppsf     = (predicted_price * 100000) / total_sqft
+    ppsf = (predicted_price * 100000) / total_sqft
     avg_ppsf = location_avg_ppsf.get(location, global_avg_ppsf)
-    ratio    = ppsf / avg_ppsf
+    ratio = ppsf / avg_ppsf
     if ratio > 1.20:
         return "Overpriced"
     elif ratio < 0.80:
@@ -135,14 +136,14 @@ def get_price_category(location: str, total_sqft: float, predicted_price: float)
 
 
 def get_comparable_properties(location: str, bhk: int) -> dict:
-    comps = data[(data['location'] == location) & (data['bhk'] == bhk)]['price']
+    comps = data[(data["location"] == location) & (data["bhk"] == bhk)]["price"]
     if len(comps) < 3:
-        comps = data[data['bhk'] == bhk]['price']
+        comps = data[data["bhk"] == bhk]["price"]
     return {
-        "min":   round(float(comps.min()), 2),
-        "max":   round(float(comps.max()), 2),
-        "avg":   round(float(comps.mean()), 2),
-        "count": int(len(comps))
+        "min": round(float(comps.min()), 2),
+        "max": round(float(comps.max()), 2),
+        "avg": round(float(comps.mean()), 2),
+        "count": int(len(comps)),
     }
 
 
@@ -151,18 +152,26 @@ def retrieve_docs(query: str, k: int = 3) -> list:
 
 
 ACTION_MAP = {
-    "Overpriced":  ("CAUTION",         "Exercise caution — negotiate hard or consider alternatives"),
-    "Fair Value":  ("HOLD / CONSIDER", "Fair deal — proceed based on your needs and preferences"),
-    "Undervalued": ("BUY",             "Strong investment opportunity — act promptly"),
+    "Overpriced": (
+        "CAUTION",
+        "Exercise caution — negotiate hard or consider alternatives",
+    ),
+    "Fair Value": (
+        "HOLD / CONSIDER",
+        "Fair deal — proceed based on your needs and preferences",
+    ),
+    "Undervalued": ("BUY", "Strong investment opportunity — act promptly"),
 }
 
 
 def market_analysis_node(state: AgentState) -> dict:
-    prop            = state["property_data"]
+    prop = state["property_data"]
     predicted_price = predict_price(prop)
-    price_category  = get_price_category(prop["location"], prop["total_sqft"], predicted_price)
+    price_category = get_price_category(
+        prop["location"], prop["total_sqft"], predicted_price
+    )
 
-    ppsf     = (predicted_price * 100000) / prop["total_sqft"]
+    ppsf = (predicted_price * 100000) / prop["total_sqft"]
     avg_ppsf = location_avg_ppsf.get(prop["location"], global_avg_ppsf)
 
     prompt = f"""
@@ -189,15 +198,15 @@ Key Value Drivers:
     response = llm.invoke(prompt)
     return {
         "predicted_price": predicted_price,
-        "price_category":  price_category,
-        "market_analysis": response.content
+        "price_category": price_category,
+        "market_analysis": response.content,
     }
 
 
 def retrieval_node(state: AgentState) -> dict:
     if state["price_category"] != "Overpriced":
         return {"retrieved_docs": []}
-    prop  = state["property_data"]
+    prop = state["property_data"]
     query = (
         f"Overpriced property in Bengaluru. "
         f"Location: {prop['location']}. "
@@ -209,15 +218,19 @@ def retrieval_node(state: AgentState) -> dict:
 
 
 def advisory_node(state: AgentState) -> dict:
-    prop            = state["property_data"]
+    prop = state["property_data"]
     predicted_price = state["predicted_price"]
-    price_category  = state["price_category"]
-    retrieved_docs  = state["retrieved_docs"]
+    price_category = state["price_category"]
+    retrieved_docs = state["retrieved_docs"]
     market_analysis = state["market_analysis"]
 
-    comps               = get_comparable_properties(prop["location"], prop["bhk"])
+    comps = get_comparable_properties(prop["location"], prop["bhk"])
     signal, action_hint = ACTION_MAP[price_category]
-    docs_text           = "\n".join(f"- {d}" for d in retrieved_docs) if retrieved_docs else "Standard market conditions apply."
+    docs_text = (
+        "\n".join(f"- {d}" for d in retrieved_docs)
+        if retrieved_docs
+        else "Standard market conditions apply."
+    )
 
     prompt = f"""
 You are an AI real estate investment advisor for Bengaluru.
@@ -256,26 +269,26 @@ This is an AI-generated advisory for informational purposes only. Consult a lice
 
 def route_by_category(state: AgentState) -> str:
     return {
-        "Overpriced":  "overpriced",
-        "Fair Value":  "fair_value",
-        "Undervalued": "undervalued"
+        "Overpriced": "overpriced",
+        "Fair Value": "fair_value",
+        "Undervalued": "undervalued",
     }.get(state["price_category"], "fair_value")
 
 
 # Build LangGraph
 builder = StateGraph(AgentState)
-builder.add_node("Market Analysis",    market_analysis_node)
+builder.add_node("Market Analysis", market_analysis_node)
 builder.add_node("Retrieval (Chroma)", retrieval_node)
-builder.add_node("Advisory",           advisory_node)
+builder.add_node("Advisory", advisory_node)
 builder.add_edge(START, "Market Analysis")
 builder.add_conditional_edges(
     "Market Analysis",
     route_by_category,
     {
-        "overpriced":  "Retrieval (Chroma)",
-        "fair_value":  "Advisory",
-        "undervalued": "Advisory"
-    }
+        "overpriced": "Retrieval (Chroma)",
+        "fair_value": "Advisory",
+        "undervalued": "Advisory",
+    },
 )
 builder.add_edge("Retrieval (Chroma)", "Advisory")
 builder.add_edge("Advisory", END)
@@ -286,21 +299,25 @@ graph = builder.compile()
 
 st.title("Real Estate AI Advisory Agent")
 st.markdown("### Hybrid ML + LLM System for Bengaluru Property Investment")
-st.caption("Predict property price and get AI-powered investment advisory — powered by LangGraph + RAG.")
+st.caption(
+    "Predict property price and get AI-powered investment advisory — powered by LangGraph + RAG."
+)
 
 st.markdown("---")
 
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    area_type  = st.selectbox("Area Type", sorted(data["area_type"].unique()))
-    total_sqft = st.number_input("Total Square Feet", min_value=300, max_value=10000, value=1200)
-    bath       = st.number_input("Bathrooms", min_value=1, max_value=10, value=2)
+    area_type = st.selectbox("Area Type", sorted(data["area_type"].unique()))
+    total_sqft = st.number_input(
+        "Total Square Feet", min_value=300, max_value=10000, value=1200
+    )
+    bath = st.number_input("Bathrooms", min_value=1, max_value=10, value=2)
 
 with col2:
     location = st.selectbox("Location", sorted(data["location"].dropna().unique()))
-    bhk      = st.number_input("BHK", min_value=1, max_value=10, value=2)
-    balcony  = st.number_input("Balconies", min_value=0, max_value=5, value=1)
+    bhk = st.number_input("BHK", min_value=1, max_value=10, value=2)
+    balcony = st.number_input("Balconies", min_value=0, max_value=5, value=1)
 
 with col3:
     st.markdown("### Dataset Stats")
@@ -313,26 +330,26 @@ st.markdown("---")
 if st.button("Get AI Advisory", type="primary", use_container_width=True):
 
     property_data = {
-        "area_type":  area_type,
-        "location":   location,
+        "area_type": area_type,
+        "location": location,
         "total_sqft": float(total_sqft),
-        "bath":       float(bath),
-        "balcony":    float(balcony),
-        "bhk":        int(bhk)
+        "bath": float(bath),
+        "balcony": float(balcony),
+        "bhk": int(bhk),
     }
 
     with st.spinner("Running AI Agent Pipeline... Please wait"):
         initial_state = {
-            "property_data":   property_data,
+            "property_data": property_data,
             "predicted_price": 0.0,
-            "price_category":  "",
+            "price_category": "",
             "market_analysis": "",
-            "retrieved_docs":  [],
-            "advisory_report": ""
+            "retrieved_docs": [],
+            "advisory_report": "",
         }
         result = graph.invoke(initial_state)
 
-    price    = result["predicted_price"]
+    price = result["predicted_price"]
     category = result["price_category"]
 
     if category == "Overpriced":
@@ -347,10 +364,15 @@ if st.button("Get AI Advisory", type="primary", use_container_width=True):
     m1, m2, m3 = st.columns(3)
     m1.metric("Predicted Price", f"₹{price:.2f} Lakhs")
     m2.metric("Your Price / sqft", f"₹{(price * 100000 / total_sqft):,.0f}")
-    m3.metric("Location Avg / sqft", f"₹{location_avg_ppsf.get(location, global_avg_ppsf):,.0f}")
+    m3.metric(
+        "Location Avg / sqft",
+        f"₹{location_avg_ppsf.get(location, global_avg_ppsf):,.0f}",
+    )
 
     if result["retrieved_docs"]:
-        st.success(f"RAG Activated — {len(result['retrieved_docs'])} market guidelines retrieved")
+        st.success(
+            f"RAG Activated — {len(result['retrieved_docs'])} market guidelines retrieved"
+        )
     else:
         st.info("Fast Path — Direct advisory (retrieval skipped)")
 
@@ -370,11 +392,14 @@ if st.button("Get AI Advisory", type="primary", use_container_width=True):
     st.markdown("---")
 
 else:
-    st.markdown("""
+    st.markdown(
+        """
     <div style="text-align:center; padding:3rem; color:#888;">
         <p style="font-size:1.2rem;">Configure property details above and click <b>Get AI Advisory</b></p>
     </div>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
 
 # Sidebar
@@ -404,13 +429,3 @@ with st.sidebar:
     """)
     st.markdown("---")
     st.markdown("Built for GenAI End-Sem Project — Milestone 2")
-
-
-
-
-
-
-
-
-
-

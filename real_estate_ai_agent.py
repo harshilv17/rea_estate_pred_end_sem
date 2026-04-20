@@ -28,7 +28,6 @@ Step 4: Advisory Generation
 - Structured report: Summary + Comps + Investment Action + Disclaimer
 """
 
-
 # ── 1. LLM Setup (Groq API) ─────────────────────────────────────────────────
 
 import os
@@ -38,8 +37,7 @@ from langchain_groq import ChatGroq
 load_dotenv()
 
 llm = ChatGroq(
-    groq_api_key=os.getenv("GROQ_API_KEY"),
-    model_name="llama-3.3-70b-versatile"
+    groq_api_key=os.getenv("GROQ_API_KEY"), model_name="llama-3.3-70b-versatile"
 )
 
 response = llm.invoke("In one sentence, what makes Bengaluru real estate unique?")
@@ -62,39 +60,40 @@ import pandas as pd
 import numpy as np
 
 data = pd.read_csv("Bengaluru_House_Data.csv")
-data = data.drop(['society', 'availability'], axis=1, errors='ignore')
+data = data.drop(["society", "availability"], axis=1, errors="ignore")
 data = data.dropna()
 
 
 def convert_sqft(x):
     try:
-        if '-' in str(x):
-            a, b = x.split('-')
+        if "-" in str(x):
+            a, b = x.split("-")
             return (float(a) + float(b)) / 2
         return float(x)
     except:
         return None
 
 
-data['total_sqft'] = data['total_sqft'].apply(convert_sqft)
+data["total_sqft"] = data["total_sqft"].apply(convert_sqft)
 data = data.dropna()
 
-extracted = data['size'].str.split().str[0]
-data['bhk'] = pd.to_numeric(extracted, errors='coerce')
-data.dropna(subset=['bhk'], inplace=True)
-data['bhk'] = data['bhk'].astype(int)
-data = data.drop('size', axis=1)
+extracted = data["size"].str.split().str[0]
+data["bhk"] = pd.to_numeric(extracted, errors="coerce")
+data.dropna(subset=["bhk"], inplace=True)
+data["bhk"] = data["bhk"].astype(int)
+data = data.drop("size", axis=1)
 
-data['price_per_sqft'] = (data['price'] * 100000) / data['total_sqft']
+data["price_per_sqft"] = (data["price"] * 100000) / data["total_sqft"]
 
 # Per-location average price/sqft — used for market positioning
-location_avg_ppsf = data.groupby('location')['price_per_sqft'].mean().to_dict()
-global_avg_ppsf   = float(data['price_per_sqft'].mean())
+location_avg_ppsf = data.groupby("location")["price_per_sqft"].mean().to_dict()
+global_avg_ppsf = float(data["price_per_sqft"].mean())
 
 print(f"Loaded {len(data):,} listings | {data['location'].nunique()} unique locations")
 
 
 # ── 4. Prediction & Market Helper Functions ─────────────────────────────────
+
 
 def predict_price(property_data: dict) -> float:
     input_df = pd.DataFrame([property_data])
@@ -102,9 +101,9 @@ def predict_price(property_data: dict) -> float:
 
 
 def get_price_category(location: str, total_sqft: float, predicted_price: float) -> str:
-    ppsf     = (predicted_price * 100000) / total_sqft
+    ppsf = (predicted_price * 100000) / total_sqft
     avg_ppsf = location_avg_ppsf.get(location, global_avg_ppsf)
-    ratio    = ppsf / avg_ppsf
+    ratio = ppsf / avg_ppsf
     if ratio > 1.20:
         return "Overpriced"
     elif ratio < 0.80:
@@ -113,28 +112,31 @@ def get_price_category(location: str, total_sqft: float, predicted_price: float)
 
 
 def get_comparable_properties(location: str, bhk: int) -> dict:
-    comps = data[(data['location'] == location) & (data['bhk'] == bhk)]['price']
+    comps = data[(data["location"] == location) & (data["bhk"] == bhk)]["price"]
     if len(comps) < 3:
-        comps = data[data['bhk'] == bhk]['price']
+        comps = data[data["bhk"] == bhk]["price"]
     return {
-        "min":   round(float(comps.min()), 2),
-        "max":   round(float(comps.max()), 2),
-        "avg":   round(float(comps.mean()), 2),
-        "count": int(len(comps))
+        "min": round(float(comps.min()), 2),
+        "max": round(float(comps.max()), 2),
+        "avg": round(float(comps.mean()), 2),
+        "count": int(len(comps)),
     }
 
 
 sample = {
-    "area_type":  "Super built-up  Area",
-    "location":   "Whitefield",
+    "area_type": "Super built-up  Area",
+    "location": "Whitefield",
     "total_sqft": 1500.0,
-    "bath":       2.0,
-    "balcony":    1.0,
-    "bhk":        3
+    "bath": 2.0,
+    "balcony": 1.0,
+    "bhk": 3,
 }
 
 print("Sample prediction: ₹", round(predict_price(sample), 2), "Lakhs")
-print("Price category:", get_price_category(sample["location"], sample["total_sqft"], predict_price(sample)))
+print(
+    "Price category:",
+    get_price_category(sample["location"], sample["total_sqft"], predict_price(sample)),
+)
 
 
 # ── 5. Agent State Definition ───────────────────────────────────────────────
@@ -143,22 +145,25 @@ from typing import TypedDict, List, Dict
 
 
 class AgentState(TypedDict):
-    property_data:   Dict
+    property_data: Dict
     predicted_price: float
-    price_category:  str
+    price_category: str
     market_analysis: str
-    retrieved_docs:  List[str]
+    retrieved_docs: List[str]
     advisory_report: str
 
 
 # ── 6. Market Analysis Node (LLM) ──────────────────────────────────────────
 
-def market_analysis_node(state: AgentState) -> dict:
-    prop            = state["property_data"]
-    predicted_price = predict_price(prop)
-    price_category  = get_price_category(prop["location"], prop["total_sqft"], predicted_price)
 
-    ppsf     = (predicted_price * 100000) / prop["total_sqft"]
+def market_analysis_node(state: AgentState) -> dict:
+    prop = state["property_data"]
+    predicted_price = predict_price(prop)
+    price_category = get_price_category(
+        prop["location"], prop["total_sqft"], predicted_price
+    )
+
+    ppsf = (predicted_price * 100000) / prop["total_sqft"]
     avg_ppsf = location_avg_ppsf.get(prop["location"], global_avg_ppsf)
 
     prompt = f"""
@@ -185,18 +190,18 @@ Key Value Drivers:
     response = llm.invoke(prompt)
     return {
         "predicted_price": predicted_price,
-        "price_category":  price_category,
-        "market_analysis": response.content
+        "price_category": price_category,
+        "market_analysis": response.content,
     }
 
 
 state = {
-    "property_data":   sample,
+    "property_data": sample,
     "predicted_price": 0.0,
-    "price_category":  "",
+    "price_category": "",
     "market_analysis": "",
-    "retrieved_docs":  [],
-    "advisory_report": ""
+    "retrieved_docs": [],
+    "advisory_report": "",
 }
 
 out = market_analysis_node(state)
@@ -215,7 +220,7 @@ documents = [
     "Ready-to-move properties command 5-15% premium over under-construction due to immediate occupancy and no GST.",
     "Properties below ₹50L in peripheral Bengaluru show higher rental yield (3-4%) vs premium properties (1.5-2.5%).",
     "Overpriced properties in saturated Bengaluru micro-markets take 6-12 months longer to resell.",
-    "A property priced more than 20% above the location average per-sqft rate is a high negotiation risk."
+    "A property priced more than 20% above the location average per-sqft rate is a high negotiation risk.",
 ]
 
 from langchain_community.vectorstores import Chroma
@@ -238,11 +243,12 @@ print(retrieve_docs("overpriced property Bengaluru"))
 
 # ── 8. Retrieval Node (Conditional — Overpriced Only) ──────────────────────
 
+
 def retrieval_node(state: AgentState) -> dict:
     if state["price_category"] != "Overpriced":
         return {"retrieved_docs": []}
 
-    prop  = state["property_data"]
+    prop = state["property_data"]
     query = (
         f"Overpriced property in Bengaluru. "
         f"Location: {prop['location']}. "
@@ -260,22 +266,32 @@ print(retrieval_node(state))
 # ── 9. Advisory Node (Final Structured Report) ──────────────────────────────
 
 ACTION_MAP = {
-    "Overpriced":  ("CAUTION",         "Exercise caution — negotiate hard or consider alternatives"),
-    "Fair Value":  ("HOLD / CONSIDER", "Fair deal — proceed based on your needs and preferences"),
-    "Undervalued": ("BUY",             "Strong investment opportunity — act promptly"),
+    "Overpriced": (
+        "CAUTION",
+        "Exercise caution — negotiate hard or consider alternatives",
+    ),
+    "Fair Value": (
+        "HOLD / CONSIDER",
+        "Fair deal — proceed based on your needs and preferences",
+    ),
+    "Undervalued": ("BUY", "Strong investment opportunity — act promptly"),
 }
 
 
 def advisory_node(state: AgentState) -> dict:
-    prop            = state["property_data"]
+    prop = state["property_data"]
     predicted_price = state["predicted_price"]
-    price_category  = state["price_category"]
-    retrieved_docs  = state["retrieved_docs"]
+    price_category = state["price_category"]
+    retrieved_docs = state["retrieved_docs"]
     market_analysis = state["market_analysis"]
 
-    comps                = get_comparable_properties(prop["location"], prop["bhk"])
-    signal, action_hint  = ACTION_MAP[price_category]
-    docs_text            = "\n".join(f"- {d}" for d in retrieved_docs) if retrieved_docs else "Standard market conditions apply."
+    comps = get_comparable_properties(prop["location"], prop["bhk"])
+    signal, action_hint = ACTION_MAP[price_category]
+    docs_text = (
+        "\n".join(f"- {d}" for d in retrieved_docs)
+        if retrieved_docs
+        else "Standard market conditions apply."
+    )
 
     prompt = f"""
 You are an AI real estate investment advisor for Bengaluru.
@@ -319,11 +335,12 @@ print(state["advisory_report"])
 
 # ── 10. LangGraph Agent Pipeline ────────────────────────────────────────────
 
+
 def route_by_category(state: AgentState) -> str:
     return {
-        "Overpriced":  "overpriced",
-        "Fair Value":  "fair_value",
-        "Undervalued": "undervalued"
+        "Overpriced": "overpriced",
+        "Fair Value": "fair_value",
+        "Undervalued": "undervalued",
     }.get(state["price_category"], "fair_value")
 
 
@@ -331,9 +348,9 @@ from langgraph.graph import StateGraph, START, END
 
 builder = StateGraph(AgentState)
 
-builder.add_node("Market Analysis",    market_analysis_node)
+builder.add_node("Market Analysis", market_analysis_node)
 builder.add_node("Retrieval (Chroma)", retrieval_node)
-builder.add_node("Advisory",           advisory_node)
+builder.add_node("Advisory", advisory_node)
 
 builder.add_edge(START, "Market Analysis")
 
@@ -341,10 +358,10 @@ builder.add_conditional_edges(
     "Market Analysis",
     route_by_category,
     {
-        "overpriced":  "Retrieval (Chroma)",
-        "fair_value":  "Advisory",
-        "undervalued": "Advisory"
-    }
+        "overpriced": "Retrieval (Chroma)",
+        "fair_value": "Advisory",
+        "undervalued": "Advisory",
+    },
 )
 
 builder.add_edge("Retrieval (Chroma)", "Advisory")
@@ -356,12 +373,12 @@ graph = builder.compile()
 # ── 11. Full Agent Execution ─────────────────────────────────────────────────
 
 initial_state = {
-    "property_data":   sample,
+    "property_data": sample,
     "predicted_price": 0.0,
-    "price_category":  "",
+    "price_category": "",
     "market_analysis": "",
-    "retrieved_docs":  [],
-    "advisory_report": ""
+    "retrieved_docs": [],
+    "advisory_report": "",
 }
 
 result = graph.invoke(initial_state)
@@ -382,6 +399,3 @@ print(result["advisory_report"])
 - Structured output format enforces consistency across all advisory reports
 - FakeEmbeddings used for free-tier compatibility (no embedding API cost)
 """
-   
-
-   
